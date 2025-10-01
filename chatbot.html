@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UG FAQ Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="header">
+            <h1>🎓 UG FAQ Assistant</h1>
+            <p>University of Ghana Information Bot</p>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="message bot-message">
+                <div class="message-content">
+                    Welcome to the University of Ghana FAQ Assistant! I'm here to help answer your questions about admissions, academics, campus life, and more. Ask me anything or choose from the quick questions below! 🏛️
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-questions">
+            <div class="quick-question-btn" onclick="askQuestion('admission requirements')">Admission Requirements</div>
+            <div class="quick-question-btn" onclick="askQuestion('school fees')">School Fees</div>
+            <div class="quick-question-btn" onclick="askQuestion('accommodation')">Accommodation</div>
+            <div class="quick-question-btn" onclick="askQuestion('academic calendar')">Academic Calendar</div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span class="dots"></span>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" class="input-field" id="userInput" placeholder="Ask your question here..." maxlength="200">
+            <button class="send-btn" onclick="sendMessage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const faqData = {
+            // Admissions
+            'admission requirements': 'For undergraduate admission to UG, you need: 1) WASSCE/SSSCE with minimum grade D7 in 6 subjects including English and Mathematics, 2) Aggregate 24 or better, 3) Completed application form, 4) Application fee payment. Some programs have specific subject requirements.',
+            
+            'application deadline': 'Application deadlines vary by program. Generally: Regular applications close in March for September admission. Check the UG admissions portal for specific deadlines as they may change yearly.',
+            
+            'programs offered': 'UG offers over 90 undergraduate programs across 16 schools and colleges including Business, Medicine, Engineering, Law, Arts, Sciences, Agriculture, and Social Sciences. Visit the official UG website for the complete list.',
+
+            // Academics
+            'academic calendar': 'The academic year runs from August to May with two semesters. First semester: August-December, Second semester: January-May. There\'s a vacation period from June-July. Exact dates are published annually.',
+            
+            'course registration': 'Course registration is done online through the Student Information System (SIS). Registration typically opens 2-3 weeks before semester begins. You need to clear all outstanding fees and holds on your account.',
+            
+            'grading system': 'UG uses a 4.0 GPA system: A=4.0 (80-100%), B+=3.5 (75-79%), B=3.0 (70-74%), C+=2.5 (65-69%), C=2.0 (60-64%), D+=1.5 (55-59%), D=1.0 (50-54%), F=0.0 (below 50%).',
+
+            // Fees & Financial
+            'school fees': 'Undergraduate fees for 2024/2025: Ghanaian students: GH₵2,000-8,000 per year depending on program. International students: $3,000-12,000 per year. Medical programs typically cost more. Check the UG website for current rates.',
+            
+            'payment methods': 'Fees can be paid through: 1) Bank deposits to UG accounts, 2) Online payment portal, 3) Mobile money, 4) Visa/Mastercard online. Payment receipts must be submitted to Finance Office.',
+            
+            'scholarships': 'UG offers various scholarships: Academic merit scholarships, Need-based financial aid, Sports scholarships, and special scholarships for brilliant but needy students. Apply through the Students\' Financial Aid Office.',
+
+            // Campus Life
+            'accommodation': 'UG provides on-campus hostels for students. Application is competitive and based on academic performance and distance from campus. Off-campus housing is also available in surrounding communities like Okponglo and Katanga.',
+            
+            'dining': 'The university has several dining options: Main cafeteria (Commonwealth Hall), various halls have their own dining facilities, and numerous food vendors on campus. Meal plans are available for hostel residents.',
+            
+            'student services': 'UG offers comprehensive student services: Health services at University Hospital, Counseling services, Career guidance, Sports facilities, Library services, and various student clubs and societies.',
+
+            // Administrative
+            'transcript': 'To obtain transcripts: 1) Submit application at Academic Affairs, 2) Pay required fees, 3) Processing takes 2-3 weeks for regular service, 1 week for express service. Online application is also available.',
+            
+            'contact information': 'University of Ghana Main Campus: P.O. Box LG 25, Legon-Accra. Phone: +233 30 213 7348. Email: info@ug.edu.gh. Website: www.ug.edu.gh. Emergency: Campus Security +233 24 432 1234.',
+            
+            'campus location': 'Main campus is located in Legon, about 13km from Accra city center. Other campuses include Korle-Bu (Medical School) and City Campus. The Legon campus is accessible by public transport (trotro) and private vehicles.',
+
+            // General
+            'library hours': 'Main library (Balme Library) hours: Monday-Friday: 8:00 AM - 10:00 PM, Saturday: 9:00 AM - 6:00 PM, Sunday: 2:00 PM - 8:00 PM. Hours may vary during exams and holidays.',
+            
+            'internet access': 'Free WiFi is available across campus (UG-Student network). Students get login credentials during registration. Computer labs are available in various departments and the library.',
+            
+            'student clubs': 'UG has over 100 student organizations including academic societies, cultural groups, sports clubs, religious organizations, and special interest groups. Join during orientation or contact Student Affairs.',
+
+            // Default responses
+            'help': 'I can help you with information about: Admissions, Academic programs, Fees and payments, Campus accommodation, Student services, Transcripts, Contact information, and general campus life. What would you like to know?',
+            
+            'thanks': 'You\'re welcome! If you have any other questions about University of Ghana, feel free to ask. I\'m here to help! 😊'
+        };
+
+        function findBestMatch(userInput) {
+            const input = userInput.toLowerCase().trim();
+            
+            // Direct keyword matching
+            for (let key in faqData) {
+                if (input.includes(key) || key.includes(input)) {
+                    return faqData[key];
+                }
+            }
+            
+            // Fuzzy matching for common variations
+            const keywordMap = {
+                'fee': 'school fees',
+                'cost': 'school fees',
+                'price': 'school fees',
+                'money': 'school fees',
+                'hostel': 'accommodation',
+                'housing': 'accommodation',
+                'residence': 'accommodation',
+                'food': 'dining',
+                'eating': 'dining',
+                'cafeteria': 'dining',
+                'grade': 'grading system',
+                'gpa': 'grading system',
+                'marks': 'grading system',
+                'register': 'course registration',
+                'enrollment': 'course registration',
+                'course': 'course registration',
+                'help': 'help',
+                'thank': 'thanks',
+                'library': 'library hours',
+                'wifi': 'internet access',
+                'internet': 'internet access',
+                'club': 'student clubs',
+                'society': 'student clubs',
+                'organization': 'student clubs'
+            };
+            
+            for (let keyword in keywordMap) {
+                if (input.includes(keyword)) {
+                    return faqData[keywordMap[keyword]];
+                }
+            }
+            
+            // Generate contextual email recommendation
+            return generateEmailRecommendation(input);
+        }
+
+        function generateEmailRecommendation(userInput) {
+            const emailRecommendations = {
+                // Academic related
+                'academic': 'For academic-related inquiries, please contact the Academic Affairs Office at: academicaffairs@ug.edu.gh',
+                'transcript': 'For transcript and academic records, contact: registrar@ug.edu.gh',
+                'exam': 'For examination-related questions, contact the Academic Affairs Office at: academicaffairs@ug.edu.gh',
+                'result': 'For results and grade inquiries, contact: academicaffairs@ug.edu.gh',
+                
+                // Admissions
+                'admission': 'For admission-related questions, contact the Admissions Office at: admissions@ug.edu.gh',
+                'application': 'For application inquiries, contact the Admissions Office at: admissions@ug.edu.gh',
+                'entry': 'For entry requirements and admissions, contact: admissions@ug.edu.gh',
+                
+                // Financial
+                'fee': 'For fee payments and financial matters, contact the Finance Office at: finance@ug.edu.gh',
+                'payment': 'For payment-related issues, contact the Finance Office at: finance@ug.edu.gh',
+                'scholarship': 'For scholarship inquiries, contact Student Financial Aid at: financialaid@ug.edu.gh',
+                'loan': 'For student loans and financial aid, contact: financialaid@ug.edu.gh',
+                
+                // Student services
+                'accommodation': 'For accommodation and hostel matters, contact Student Affairs at: studentaffairs@ug.edu.gh',
+                'hostel': 'For hostel-related inquiries, contact Student Affairs at: studentaffairs@ug.edu.gh',
+                'health': 'For health services and medical issues, contact University Hospital at: hospital@ug.edu.gh',
+                'counseling': 'For counseling services, contact Student Affairs at: studentaffairs@ug.edu.gh',
+                
+                // Technical
+                'portal': 'For portal and technical issues, contact ICT Services at: ict@ug.edu.gh',
+                'website': 'For website and online services issues, contact: ict@ug.edu.gh',
+                'internet': 'For internet and WiFi issues, contact ICT Services at: ict@ug.edu.gh',
+                
+                // Employment/Career
+                'job': 'For career services and job opportunities, contact Career Services at: careers@ug.edu.gh',
+                'internship': 'For internship opportunities, contact Career Services at: careers@ug.edu.gh',
+                'alumni': 'For alumni-related matters, contact: alumni@ug.edu.gh'
+            };
+            
+            // Check for specific keywords in user input
+            for (let keyword in emailRecommendations) {
+                if (userInput.includes(keyword)) {
+                    return `I don't have specific information about that topic. However, ${emailRecommendations[keyword]} 
+
+You can also call the main office at +233 30 213 7348 for general inquiries or visit the UG website at www.ug.edu.gh for more information.`;
+                }
+            }
+            
+            // Default response with general contact info
+            return `I'm sorry, I don't have specific information about that topic. For detailed assistance, please contact the appropriate office:
+
+📧 General Inquiries: info@ug.edu.gh
+📧 Academic Matters: academicaffairs@ug.edu.gh  
+📧 Admissions: admissions@ug.edu.gh
+📧 Student Affairs: studentaffairs@ug.edu.gh
+📞 Main Office: +233 30 213 7348
+
+You can also visit the UG website at www.ug.edu.gh for comprehensive information.`;
+        }
+
+        function addMessage(message, isUser = false) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = message;
+            
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'flex';
+            document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = findBestMatch(message);
+                addMessage(response);
+            }, 1000);
+        }
+
+        function askQuestion(question) {
+            addMessage(question, true);
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = findBestMatch(question);
+                addMessage(response);
+            }, 1000);
+        }
+
+        // Enter key functionality
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Auto-focus input field
+        document.getElementById('userInput').focus();
+    </script>
+</body>
+</html>
